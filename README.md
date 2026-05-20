@@ -216,3 +216,103 @@ const device = {
 ```
 
 ---
+
+**Struktur Folder**
+
+```
+qianai/
+│
+├── app.js
+├── package.json
+├── .env
+│
+├── config/
+│   └── index.js          → db, env, constants semua dari sini
+│
+├── core/
+│   ├── auth.js           → webauthn register + verify + session
+│   ├── pairing.js        → generate QR, token, relasi user
+│   ├── signaling.js      → WebRTC signaling via socket
+│   └── sync.js           → offline queue + IP change handler
+│
+├── server/
+│   └── routes.js          → semua route digabung di satu file
+│   └── models.js          → semua query SQL dari satu file
+│   └── socket.js          → socket.io handler + event registry
+│   └── Middleware.js          → auth guard, rate limit, error handler
+│
+├── uploads/
+│   ├── images/
+│   ├── videos/
+│   └── files/
+│
+├── public/
+│   ├── index.html        → dashboard / chat utama
+│   ├── auth.html         → register + login fingerprint
+│   ├── pair.html         → scan QR + pairing
+│   └── settings.html     → profil, username, bio, avatar
+│
+└── assets/
+    ├── css/
+    │   ├── base.css      → design tokens, reset, typography
+    │   ├── components.css → button, input, card, avatar, bubble
+    │   └── pages.css     → layout spesifik per halaman
+    ├── js/
+    │   ├── sw.js         → service worker + cache strategy
+    │   ├── store.js      → localStorage + IndexedDB handler
+    │   ├── api.js        → semua fetch ke backend dari sini
+    │   ├── webauthn.js   → client-side fingerprint flow
+    │   ├── webrtc.js     → peer connection + data channel
+    │   ├── chat.js       → UI chat + media + sync handler
+    │   ├── pair.js       → QR scanner + pairing flow
+    │   └── settings.js   → update profil handler
+    └── images/
+```
+
+**Penjelasan keputusan penggabungan**
+
+```
+config/index.js
+→ db connection, env variables, dan constants
+  tidak perlu 3 file terpisah untuk hal yang saling bergantung
+
+core/*.js
+→ setiap file adalah satu domain logika utuh
+  auth.js bukan hanya webauthn, tapi juga session management
+  pairing.js bukan hanya QR, tapi juga token dan relasi
+
+routes/index.js
+→ semua endpoint di satu tempat
+  mudah lihat peta API tanpa buka banyak file
+  dikelompokkan per domain dengan komentar section
+
+models/index.js
+→ semua SQL query function di satu file
+  tidak ada ORM, pure query function
+  mudah di-trace dan di-maintain
+
+middleware/index.js
+→ auth guard, rate limiter, error handler digabung
+  ketiganya kecil dan saling berkaitan
+
+assets/js/api.js
+→ semua fetch call dari client ke backend
+  tidak ada fetch tersebar di mana-mana
+  satu pintu untuk semua komunikasi HTTP
+
+assets/js/store.js
+→ localStorage dan IndexedDB dalam satu handler
+  konsistensi akses data lokal dari satu tempat
+```
+
+**File terpenting sebagai entry point pemahaman project**
+
+```
+app.js            → lihat ini untuk memahami server secara keseluruhan
+routes/index.js   → lihat ini untuk memahami semua API
+models/index.js   → lihat ini untuk memahami semua interaksi database
+assets/js/api.js  → lihat ini untuk memahami semua komunikasi client
+```
+
+---
+
