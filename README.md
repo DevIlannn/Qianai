@@ -12,3 +12,47 @@ qianai/
     ├── js/
     └── images/
 ```
+
+Oke README sudah terbaca. Ini penjelasan sistem secara teknis murni:
+
+---
+
+**Identity System**
+Registrasi tidak menggunakan kredensial tradisional. WebAuthn meminta browser membuat keypair kriptografis di secure hardware perangkat (TPM / Secure Enclave). Private key tidak pernah keluar dari hardware. Public key dikirim ke server, diverifikasi, lalu server men-generate ID 8 digit unik dan QR code yang terikat ke public key tersebut. Setiap challenge autentikasi hanya bisa dijawab oleh perangkat fisik yang sama.
+
+---
+
+**Pairing System**
+Server menyimpan relasi dua arah antara dua user ID. Pairing hanya bisa terjadi melalui QR scan, di mana QR berisi token sementara yang di-generate server, bukan ID mentah. Token ini single-use, expire dalam waktu terbatas, dan divalidasi server sebelum relasi dicatat ke database. Client tidak pernah tahu ID pasangan secara langsung, semua resolusi terjadi di server.
+
+---
+
+**Signaling + WebRTC**
+Saat pairing selesai, server menggunakan koneksi WebSocket yang sudah aktif dari kedua user untuk menjalankan WebRTC signaling. Server bertukar SDP offer/answer dan ICE candidates antara dua peer. Setelah handshake selesai, Data Channel terbentuk langsung antar device. Server keluar dari jalur komunikasi sepenuhnya.
+
+---
+
+**Offline + Sync System**
+Data esensial seperti profil, session token, dan riwayat pesan di-cache ke IndexedDB saat pertama kali online. Pesan yang dikirim saat offline masuk ke antrian lokal dengan status `pending` dan timestamp + UUID unik. WebRTC Data Channel tetap hidup selama kedua device berada di jaringan yang sama meski internet terputus. Saat koneksi kembali, Service Worker menjalankan background sync, mendorong semua pesan pending ke PostgreSQL dengan mekanisme upsert berbasis message ID untuk mencegah duplikat.
+
+---
+
+**Storage Architecture**
+```
+PostgreSQL     → source of truth, identitas + relasi + riwayat pesan
+IndexedDB      → cache lokal, antrian offline, state WebRTC
+localStorage   → session token, data profil ringan
+```
+
+---
+```
+Browser request halaman
+        ↓
+Service Worker intercept
+        ↓
+Ada internet?
+├── YA  → fetch dari network, update cache, sajikan
+└── TIDAK → sajikan dari cache langsung
+```
+**Service Worker.**
+Service Worker adalah script yang berjalan di background browser, terpisah dari halaman. Dia duduk di antara browser dan network, mencegat semua request. Saat online, dia cache semua aset penting. Saat offline, dia sajikan dari cache itu.
