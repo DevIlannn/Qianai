@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a0f">
+    <title>Qianai - Hubungkan Pasangan</title>
+    <link rel="stylesheet" href="/assets/css/base.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/pages.css">
+</head>
+<body>
+
+<main class="page-pair">
+
+    <div class="pair-header">
+        <h1 class="pair-title">Hubungkan Pasanganmu</h1>
+        <p class="pair-desc">Tunjukkan QR-mu atau scan QR pasanganmu</p>
+    </div>
+
+    <div class="pair-tabs">
+        <button class="pair-tab active" data-tab="show">QR Saya</button>
+        <button class="pair-tab"        data-tab="scan">Scan QR</button>
+    </div>
+
+    <div class="pair-panel">
+
+        <div class="pair-panel-content active" id="tab-show">
+            <div class="qr-box">
+                <div class="qr-image-wrap" id="qr-wrap">
+                    <div class="loader"></div>
+                </div>
+                <div class="qr-id" id="qr-user-id">--------</div>
+                <div class="qr-expires" id="qr-expires">Memuat QR...</div>
+                <div style="margin-top:20px">
+                    <button class="btn btn-secondary btn-full btn-sm" id="btn-refresh-qr">
+                        <i class="fa-solid fa-rotate"></i> Perbarui QR
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="pair-panel-content" id="tab-scan">
+            <div class="scan-box">
+                <div class="scan-video-wrap">
+                    <video id="scan-video" autoplay playsinline muted></video>
+                    <div class="scan-overlay">
+                        <div class="scan-frame">
+                            <div class="scan-line"></div>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-full" id="btn-start-scan">
+                    <i class="fa-solid fa-camera"></i> Mulai Kamera
+                </button>
+                <p style="font-size:0.8125rem;color:var(--text-muted);text-align:center;margin-top:12px">
+                    Arahkan kamera ke QR pasanganmu
+                </p>
+            </div>
+        </div>
+
+    </div>
+
+    <div style="margin-top:24px">
+        <button class="btn btn-ghost btn-sm" id="btn-logout">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Keluar
+        </button>
+    </div>
+
+</main>
+
+<div class="overlay hidden" id="overlay-success">
+    <div class="modal" style="text-align:center">
+        <div style="width:64px;height:64px;border-radius:50%;background:rgba(74,222,128,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:1.75rem;color:var(--success)">
+            <i class="fa-solid fa-heart"></i>
+        </div>
+        <h2 style="font-size:1.25rem;margin-bottom:8px">Terhubung!</h2>
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:24px">Kamu dan pasanganmu berhasil terhubung</p>
+        <button class="btn btn-primary btn-full" id="btn-go-chat">Mulai Chat</button>
+    </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script type="module">
+    import { Store }   from '/assets/js/store.js'
+    import { PairAPI } from '/assets/js/api.js'
+
+    const $ = (id) => document.getElementById(id)
+
+    const toast = (msg, type = 'info') => {
+        const el = document.createElement('div')
+        el.className = `toast ${type}`
+        el.innerHTML = `<i class="fa-solid fa-${type === 'error' ? 'circle-xmark' : 'circle-check'}"></i><span>${msg}</span>`
+        $('toast-container').appendChild(el)
+        setTimeout(() => el.remove(), 3500)
+    }
+
+    if (!Store.isLoggedIn()) {
+        window.location.href = '/auth.html'
+    }
+
+    const user = Store.getUser()
+    if (user?.id) $('qr-user-id').textContent = user.id
+
+    document.querySelectorAll('.pair-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.pair-tab').forEach(t => t.classList.remove('active'))
+            document.querySelectorAll('.pair-panel-content').forEach(p => p.classList.remove('active'))
+            tab.classList.add('active')
+            $(`tab-${tab.dataset.tab}`).classList.add('active')
+
+            if (tab.dataset.tab === 'scan') initScanner()
+        })
+    })
+
+    const loadQr = async () => {
+        try {
+            const { qr, expiresAt } = await PairAPI.getQr()
+            const img  = document.createElement('img')
+            img.src    = qr
+            img.alt    = 'QR Code'
+            $('qr-wrap').innerHTML = ''
+            $('qr-wrap').appendChild(img)
+
+            const exp = new Date(expiresAt)
+            $('qr-expires').textContent = `Berlaku hingga ${exp.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`
+        } catch {
+            $('qr-expires').textContent = 'Gagal memuat QR'
+            toast('Gagal memuat QR code', 'error')
+        }
+    }
+
+    $('btn-refresh-qr').addEventListener('click', loadQr)
+
+    let scanStream   = null
+    let scanInterval = null
+
+    const initScanner = async () => {
+        if (scanStream) return
+        try {
+            scanStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment' }
+            })
+            $('scan-video').srcObject = scanStream
+            $('btn-start-scan').classList.add('hidden')
+
+            const { BrowserQRCodeReader } = await import('https://cdn.jsdelivr.net/npm/@zxing/browser@0.1.4/+esm')
+            const reader = new BrowserQRCodeReader()
+
+            scanInterval = setInterval(async () => {
+                try {
+                    const result = await reader.decodeFromVideoElement($('scan-video'))
+                    if (!result) return
+
+                    clearInterval(scanInterval)
+                    stopScanner()
+
+                    const payload = JSON.parse(result.getText())
+                    if (!payload?.t) return toast('QR tidak valid', 'error')
+
+                    const { pair, userA, userB } = await PairAPI.scan(payload.t)
+
+                    const partner = userA.id === user?.id ? userB : userA
+                    Store.setPair({ id: pair.id, ...pair.data })
+                    Store.setPartner({ id: partner.id, ...partner.data })
+
+                    $('overlay-success').classList.remove('hidden')
+                } catch {}
+            }, 500)
+
+        } catch {
+            toast('Tidak bisa mengakses kamera', 'error')
+        }
+    }
+
+    const stopScanner = () => {
+        if (scanStream) {
+            scanStream.getTracks().forEach(t => t.stop())
+            scanStream = null
+        }
+        if (scanInterval) {
+            clearInterval(scanInterval)
+            scanInterval = null
+        }
+    }
+
+    $('btn-start-scan').addEventListener('click', initScanner)
+
+    $('btn-go-chat').addEventListener('click', () => {
+        window.location.href = '/index.html'
+    })
+
+    $('btn-logout').addEventListener('click', () => {
+        Store.clear()
+        window.location.href = '/auth.html'
+    })
+
+    loadQr()
+</script>
+
+</body>
+</html>

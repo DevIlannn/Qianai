@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Qianai - Ruang chat privat untuk dua orang">
+    <meta name="theme-color" content="#0a0a0f">
+    <title>Qianai</title>
+    <link rel="stylesheet" href="/assets/css/base.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/pages.css">
+</head>
+<body>
+
+<main class="page-auth">
+    <div class="auth-box">
+
+        <div class="auth-logo">
+            <div class="auth-logo-mark">
+                <i class="fa-solid fa-heart"></i>
+            </div>
+            <span class="auth-logo-name">Qianai</span>
+            <span class="auth-logo-tagline">Hanya ada kita berdua</span>
+        </div>
+
+        <div class="auth-card" id="view-welcome">
+            <p class="auth-title">Selamat datang</p>
+            <p class="auth-desc">Masuk atau buat akun menggunakan sidik jari perangkatmu. Tidak ada kata sandi, tidak ada email.</p>
+
+            <button class="auth-fp-btn" id="btn-login">
+                <span class="auth-fp-icon">
+                    <i class="fa-solid fa-fingerprint"></i>
+                </span>
+                <span class="auth-fp-text">
+                    <span>Masuk dengan Sidik Jari</span>
+                    <small>Gunakan akun yang sudah ada</small>
+                </span>
+            </button>
+
+            <div class="auth-divider">atau</div>
+
+            <button class="auth-fp-btn" id="btn-register">
+                <span class="auth-fp-icon" style="background:rgba(74,222,128,0.1);border-color:rgba(74,222,128,0.2);color:var(--success)">
+                    <i class="fa-solid fa-user-plus"></i>
+                </span>
+                <span class="auth-fp-text">
+                    <span>Buat Akun Baru</span>
+                    <small>Daftarkan sidik jari perangkatmu</small>
+                </span>
+            </button>
+        </div>
+
+        <div class="auth-card hidden" id="view-loading">
+            <div style="text-align:center;padding:16px 0">
+                <div class="loader loader-lg" style="margin:0 auto 20px"></div>
+                <p style="font-weight:500;margin-bottom:6px" id="loading-title">Memproses...</p>
+                <p style="font-size:0.875rem;color:var(--text-muted)" id="loading-desc">Mohon tunggu sebentar</p>
+            </div>
+        </div>
+
+        <div class="auth-card hidden" id="view-success">
+            <div style="text-align:center;padding:16px 0">
+                <div style="width:56px;height:56px;border-radius:50%;background:rgba(74,222,128,0.15);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:1.5rem;color:var(--success)">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <p style="font-weight:500;margin-bottom:6px" id="success-title">Berhasil</p>
+                <p style="font-size:0.875rem;color:var(--text-muted)" id="success-desc">Mengalihkan...</p>
+            </div>
+        </div>
+
+        <div class="auth-footer">
+            Identitasmu dilindungi oleh <strong style="color:var(--text-secondary)">cryptographic device key</strong>
+        </div>
+
+    </div>
+</main>
+
+<div class="toast-container" id="toast-container"></div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script type="module">
+    import { WebAuthnClient } from '/assets/js/webauthn.js'
+    import { Store }          from '/assets/js/store.js'
+    import { PairAPI }        from '/assets/js/api.js'
+
+    const $ = (id) => document.getElementById(id)
+
+    const showView = (id) => {
+        ['view-welcome','view-loading','view-success'].forEach(v => $('auth-box')?.classList.remove(v))
+        document.querySelectorAll('.auth-card').forEach(c => c.classList.add('hidden'))
+        $(id).classList.remove('hidden')
+    }
+
+    const toast = (msg, type = 'info') => {
+        const el = document.createElement('div')
+        el.className = `toast ${type}`
+        el.innerHTML = `<i class="fa-solid fa-${type === 'error' ? 'circle-xmark' : type === 'success' ? 'circle-check' : 'circle-info'}"></i><span>${msg}</span>`
+        $('toast-container').appendChild(el)
+        setTimeout(() => el.remove(), 3500)
+    }
+
+    const setLoading = (title, desc) => {
+        $('loading-title').textContent = title
+        $('loading-desc').textContent  = desc
+        showView('view-loading')
+    }
+
+    const setSuccess = (title, desc) => {
+        $('success-title').textContent = title
+        $('success-desc').textContent  = desc
+        showView('view-success')
+    }
+
+    const redirect = async () => {
+        const status = await PairAPI.status()
+        window.location.href = status.paired ? '/chat.html' : '/pair.html'
+    }
+
+    if (Store.isLoggedIn()) {
+        redirect().catch(() => { Store.clear() })
+    }
+
+    $('btn-login').addEventListener('click', async () => {
+        if (!WebAuthnClient.isSupported()) {
+            return toast('Browser tidak mendukung autentikasi sidik jari', 'error')
+        }
+        try {
+            setLoading('Masuk dengan Sidik Jari', 'Tempelkan jari pada sensor perangkatmu')
+            await WebAuthnClient.login((msg) => {
+                $('loading-desc').textContent = msg
+            })
+            setSuccess('Berhasil Masuk', 'Mengalihkan ke halaman utama...')
+            setTimeout(redirect, 1200)
+        } catch (err) {
+            showView('view-welcome')
+            toast(err.message || 'Login gagal', 'error')
+        }
+    })
+
+    $('btn-register').addEventListener('click', async () => {
+        if (!WebAuthnClient.isSupported()) {
+            return toast('Browser tidak mendukung autentikasi sidik jari', 'error')
+        }
+        try {
+            setLoading('Mendaftarkan Sidik Jari', 'Tempelkan jari pada sensor perangkatmu')
+            await WebAuthnClient.register((msg) => {
+                $('loading-desc').textContent = msg
+            })
+            setSuccess('Akun Berhasil Dibuat', 'Mengalihkan ke halaman pairing...')
+            setTimeout(() => { window.location.href = '/pair.html' }, 1200)
+        } catch (err) {
+            showView('view-welcome')
+            toast(err.message || 'Registrasi gagal', 'error')
+        }
+    })
+</script>
+
+</body>
+</html>

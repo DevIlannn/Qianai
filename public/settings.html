@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0a0a0f">
+    <title>Qianai - Pengaturan</title>
+    <link rel="stylesheet" href="/assets/css/base.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/pages.css">
+    <style>
+        .page-settings {
+            min-height     : 100dvh;
+            display        : flex;
+            flex-direction : column;
+        }
+
+        .settings-header {
+            display         : flex;
+            align-items     : center;
+            gap             : 12px;
+            padding         : 14px 18px;
+            background      : var(--bg-1);
+            border-bottom   : 1px solid var(--border-1);
+            position        : sticky;
+            top             : 0;
+            z-index         : var(--z-above);
+        }
+
+        .settings-header h1 {
+            font-size   : 1rem;
+            font-weight : 600;
+            flex        : 1;
+        }
+
+        .settings-body {
+            flex       : 1;
+            padding    : 24px 18px;
+            max-width  : 520px;
+            margin     : 0 auto;
+            width      : 100%;
+        }
+
+        .settings-avatar-section {
+            display         : flex;
+            flex-direction  : column;
+            align-items     : center;
+            gap             : 12px;
+            padding         : 28px;
+            background      : var(--bg-2);
+            border          : 1px solid var(--border-1);
+            border-radius   : var(--radius-xl);
+            margin-bottom   : 20px;
+        }
+
+        .avatar-edit-wrap {
+            position : relative;
+            cursor   : pointer;
+        }
+
+        .avatar-edit-overlay {
+            position        : absolute;
+            inset           : 0;
+            border-radius   : 50%;
+            background      : rgba(0,0,0,0.5);
+            display         : flex;
+            align-items     : center;
+            justify-content : center;
+            opacity         : 0;
+            transition      : opacity var(--transition);
+            font-size       : 1rem;
+            color           : #fff;
+        }
+
+        .avatar-edit-wrap:hover .avatar-edit-overlay { opacity: 1; }
+
+        .display-name {
+            font-size   : 1.125rem;
+            font-weight : 600;
+        }
+
+        .display-id {
+            font-size      : 0.875rem;
+            color          : var(--text-muted);
+            letter-spacing : 0.1em;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .settings-section {
+            background    : var(--bg-2);
+            border        : 1px solid var(--border-1);
+            border-radius : var(--radius-xl);
+            padding       : 24px;
+            margin-bottom : 16px;
+        }
+
+        .settings-section-title {
+            font-size     : 0.8125rem;
+            font-weight   : 600;
+            color         : var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom : 18px;
+        }
+
+        .form-stack {
+            display       : flex;
+            flex-direction: column;
+            gap           : 16px;
+        }
+
+        .danger-zone {
+            border-color : rgba(248,113,113,0.2);
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-settings">
+
+    <header class="settings-header">
+        <a href="/index.html" class="btn btn-icon btn-ghost">
+            <i class="fa-solid fa-arrow-left"></i>
+        </a>
+        <h1>Pengaturan</h1>
+    </header>
+
+    <div class="settings-body">
+
+        <div class="settings-avatar-section">
+            <div class="avatar-edit-wrap" id="btn-change-avatar">
+                <div class="avatar avatar-xl" id="display-avatar"></div>
+                <div class="avatar-edit-overlay">
+                    <i class="fa-solid fa-camera"></i>
+                </div>
+            </div>
+            <div class="display-name" id="display-name">Memuat...</div>
+            <div class="display-id" id="display-id"></div>
+            <input type="file" id="input-avatar" accept="image/*" class="hidden">
+        </div>
+
+        <form id="form-settings">
+            <div class="settings-section">
+                <div class="settings-section-title">Profil</div>
+                <div class="form-stack">
+                    <div class="input-group">
+                        <label class="input-label" for="input-username">Username</label>
+                        <input
+                            class="input-field"
+                            id="input-username"
+                            type="text"
+                            placeholder="Nama panggilanmu"
+                            maxlength="32"
+                            autocomplete="off"
+                        >
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label" for="input-bio">Bio</label>
+                        <textarea
+                            class="input-field"
+                            id="input-bio"
+                            placeholder="Ceritakan sedikit tentangmu..."
+                            maxlength="120"
+                            rows="3"
+                        ></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="btn-save">
+                        Simpan Perubahan
+                    </button>
+                </div>
+            </div>
+        </form>
+
+        <div class="settings-section danger-zone">
+            <div class="settings-section-title" style="color:rgba(248,113,113,0.7)">Keluar</div>
+            <p style="font-size:0.875rem;color:var(--text-muted);margin-bottom:16px">
+                Sesi akan dihapus dari perangkat ini. Data chat tetap tersimpan.
+            </p>
+            <button class="btn btn-danger" id="btn-logout">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Keluar dari Akun
+            </button>
+        </div>
+
+    </div>
+
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script type="module">
+    import { Store }       from '/assets/js/store.js'
+    import { SettingsUI }  from '/assets/js/settings.js'
+
+    if (!Store.isLoggedIn()) {
+        window.location.href = '/auth.html'
+    }
+
+    SettingsUI.init()
+</script>
+
+</body>
+</html>

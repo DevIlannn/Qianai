@@ -1,0 +1,169 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
+
+:root {
+    --bg-0         : #0a0a0f;
+    --bg-1         : #111118;
+    --bg-2         : #18181f;
+    --bg-3         : #1f1f28;
+    --bg-4         : #26262f;
+
+    --surface-1    : rgba(255,255,255,0.04);
+    --surface-2    : rgba(255,255,255,0.07);
+    --surface-3    : rgba(255,255,255,0.10);
+
+    --border-1     : rgba(255,255,255,0.06);
+    --border-2     : rgba(255,255,255,0.10);
+    --border-3     : rgba(255,255,255,0.16);
+
+    --text-primary : #f0eff8;
+    --text-secondary: #9997b0;
+    --text-muted   : #5a5870;
+    --text-inverse : #0a0a0f;
+
+    --accent       : #c084fc;
+    --accent-dim   : rgba(192,132,252,0.15);
+    --accent-glow  : rgba(192,132,252,0.25);
+    --accent-dark  : #7c3aed;
+
+    --success      : #4ade80;
+    --warning      : #facc15;
+    --danger       : #f87171;
+    --info         : #60a5fa;
+
+    --font-sans    : 'DM Sans', sans-serif;
+    --font-serif   : 'Lora', serif;
+
+    --radius-sm    : 6px;
+    --radius-md    : 12px;
+    --radius-lg    : 18px;
+    --radius-xl    : 24px;
+    --radius-full  : 9999px;
+
+    --shadow-sm    : 0 1px 3px rgba(0,0,0,0.4);
+    --shadow-md    : 0 4px 16px rgba(0,0,0,0.5);
+    --shadow-lg    : 0 8px 32px rgba(0,0,0,0.6);
+    --shadow-glow  : 0 0 32px var(--accent-glow);
+
+    --transition   : 0.2s cubic-bezier(0.4,0,0.2,1);
+    --transition-slow: 0.4s cubic-bezier(0.4,0,0.2,1);
+
+    --z-base       : 1;
+    --z-above      : 10;
+    --z-modal      : 100;
+    --z-toast      : 200;
+    --z-top        : 999;
+}
+
+*, *::before, *::after {
+    box-sizing : border-box;
+    margin     : 0;
+    padding    : 0;
+}
+
+html {
+    font-size        : 16px;
+    scroll-behavior  : smooth;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family      : var(--font-sans);
+    font-size        : 0.9375rem;
+    font-weight      : 400;
+    line-height      : 1.6;
+    color            : var(--text-primary);
+    background-color : var(--bg-0);
+    min-height       : 100dvh;
+    overflow-x       : hidden;
+    -webkit-font-smoothing : antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+img, video {
+    max-width    : 100%;
+    display      : block;
+    border-radius: var(--radius-sm);
+}
+
+button {
+    font-family : var(--font-sans);
+    cursor      : pointer;
+    border      : none;
+    background  : none;
+}
+
+input, textarea {
+    font-family : var(--font-sans);
+    font-size   : inherit;
+}
+
+a {
+    color           : var(--accent);
+    text-decoration : none;
+    transition      : opacity var(--transition);
+}
+
+a:hover { opacity: 0.8; }
+
+::selection {
+    background : var(--accent-dim);
+    color      : var(--text-primary);
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track  { background: transparent; }
+::-webkit-scrollbar-thumb  {
+    background    : var(--bg-4);
+    border-radius : var(--radius-full);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.94); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes glow {
+    0%, 100% { box-shadow: 0 0 16px var(--accent-glow); }
+    50%       { box-shadow: 0 0 32px var(--accent-glow), 0 0 64px var(--accent-dim); }
+}
+
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(16px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-16px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+.hidden        { display: none !important; }
+.sr-only       {
+    position : absolute;
+    width    : 1px;
+    height   : 1px;
+    padding  : 0;
+    margin   : -1px;
+    overflow : hidden;
+    clip     : rect(0,0,0,0);
+    border   : 0;
+}
