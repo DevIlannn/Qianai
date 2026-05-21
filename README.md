@@ -1,18 +1,6 @@
 # Qianai
 **Qianai** adalah aplikasi chat privat yang dirancang khusus untuk dua orang yang saling terhubung sebagai pasangan. Berbeda dari aplikasi pesan pada umumnya, Qianai tidak menggunakan akun berbasis email, nomor telepon, atau platform pihak ketiga. Identitas setiap pengguna dibangun dari sidik jari mereka sendiri, di mana proses autentikasi menggunakan **cryptographic device key** yang dibuat dan disimpan langsung di secure hardware perangkat seperti TPM atau Secure Enclave. Kunci ini tidak pernah meninggalkan perangkat, tidak bisa disalin, tidak bisa direkayasa balik, dan secara alami tahan terhadap perubahan karena terikat pada hardware fisik pengguna itu sendiri. Dari proses ini lahir ID unik dan kode QR sebagai satu-satunya cara untuk saling terhubung. Dua orang hanya bisa terhubung melalui proses scan QR secara langsung, menjadikan setiap koneksi terasa intim dan disengaja. Setelah terhubung, keduanya mendapatkan ruang chat pribadi yang sepenuhnya terisolasi, di mana percakapan, momen, dan kehadiran satu sama lain tersimpan dalam sistem yang mereka miliki sendiri. Tidak ada iklan, tidak ada algoritma, tidak ada orang lain. Qianai bukan sekadar aplikasi chat, tapi sebuah ruang digital eksklusif yang hanya berisi dua orang.
 
-```
-qianai/
-├── app.js
-├── public/
-│   ├── index.html
-│   └── auth.html
-└── assets/
-    ├── css/
-    ├── js/
-    └── images/
-```
-
 ---
 
 **Identity System**
@@ -34,9 +22,7 @@ Data esensial seperti profil, session token, dan riwayat pesan di-cache ke Index
 PostgreSQL     → source of truth, identitas + relasi + riwayat pesan
 IndexedDB      → cache lokal, antrian offline, state WebRTC
 localStorage   → session token, data profil ringan
-```
 
-```
 Browser request halaman
         ↓
 Service Worker intercept
@@ -235,11 +221,17 @@ qianai/
 │   ├── signaling.js      → WebRTC signaling via socket
 │   └── sync.js           → offline queue + IP change handler
 │
-├── server/
-│   └── routes.js          → semua route digabung di satu file
-│   └── models.js          → semua query SQL dari satu file
-│   └── socket.js          → socket.io handler + event registry
-│   └── Middleware.js          → auth guard, rate limit, error handler
+├── routes/
+│   └── index.js          → semua route digabung di satu file
+│
+├── models/
+│   └── index.js          → semua query SQL dari satu file
+│
+├── socket/
+│   └── index.js          → socket.io handler + event registry
+│
+├── middleware/
+│   └── index.js          → auth guard, rate limit, error handler
 │
 ├── uploads/
 │   ├── images/
@@ -268,6 +260,8 @@ qianai/
     │   └── settings.js   → update profil handler
     └── images/
 ```
+
+---
 
 **Penjelasan keputusan penggabungan**
 
@@ -304,6 +298,8 @@ assets/js/store.js
 → localStorage dan IndexedDB dalam satu handler
   konsistensi akses data lokal dari satu tempat
 ```
+
+---
 
 **File terpenting sebagai entry point pemahaman project**
 
